@@ -31,7 +31,18 @@ i.e. Disclaimer: Normally, when you receive a school assignment, you should impl
 Results
 =======
 
-TODO once this is actually implemented and running
+The output states:
+```
+Computed 10000 values in 11 ticks, or 0.011000s, timed using clock()
+Mind you, 0.010000s was spent in I/O operations on the input.txt file
+and thus, only 0.001000s were spent actually computing stuff
+```
+
+Yes, I'm counting I/O time separately and substracting it because it outweighs the processing time by an order of magnitude, which skews the results very badly.
+
+Sometimes it says "0.0" for the "actually computing stuff" part. So, target achieved (<1ms) and I'm happy.
+
+It's really hard to optimize things when you need to read & write a lot of stuff to disk.
 
 TODO list
 =========
@@ -39,6 +50,6 @@ TODO list
 * [x] run time engine
 * [ ] Generator
 * [ ] DB and metadata
-* [ ] validation run
-* [ ] performance tests
+* [x] validation run
+* [x] performance tests
 * [ ] visual studio project that builds the generator, runs it and generates the DB files

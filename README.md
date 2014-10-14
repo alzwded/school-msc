@@ -44,6 +44,11 @@ Sometimes it says "0.0" for the "actually computing stuff" part. So, target achi
 
 It's really hard to optimize things when you need to read & write a lot of stuff to disk.
 
+OpenMP
+------
+
+Sadly, because the execution time is so low and Windows' scheduler is so weird, running on multiple threads yields *slower* results most of the time (but not all of the time). So no multithreading in this case.
+
 TODO list
 =========
 

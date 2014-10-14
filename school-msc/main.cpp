@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
-#undef min // FU windows.h
 #include <utility>
 #include <stdio.h>
 #include <vector>

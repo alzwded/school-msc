@@ -186,3 +186,4 @@ FakesAssemblies/
 tools/db.*
 tools/input.txt
 testbed/
+[Dd]ebugProfile

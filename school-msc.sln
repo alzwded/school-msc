@@ -1,16 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
+# Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "school-msc", "school-msc\school-msc.vcxproj", "{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		DebugProfile|Win32 = DebugProfile|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}.Debug|Win32.ActiveCfg = Debug|Win32
 		{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}.Debug|Win32.Build.0 = Debug|Win32
+		{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}.DebugProfile|Win32.ActiveCfg = DebugProfile|Win32
+		{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}.DebugProfile|Win32.Build.0 = DebugProfile|Win32
 		{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}.Release|Win32.ActiveCfg = Release|Win32
 		{EAB6AEC0-2C7B-41EC-B3CA-22B275DB38BF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection

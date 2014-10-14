@@ -19,7 +19,7 @@ for(my $i = 0; $i < 10000; ++$i)
     my $xval = $x * 0.001 - 1.0;
     my $yval = $y * 0.0005;
 
-    printf A "%f %f\n", $xval, $yval;
+    printf A "%f %f \r\n", $xval, $yval;
 }
 
 close A;

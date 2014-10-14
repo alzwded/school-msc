@@ -1,5 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#undef min // FU windows.h
+#include <utility>
 #include <stdio.h>
 #include <vector>
 #include <cmath>
@@ -18,8 +20,10 @@ typedef struct {
 
 // our metadata container
 typedef struct {
-    float k1_base, k1_n, k1_step;
-    float k2_base, k2_n, k2_step;
+    float k1_base, k1_step;
+    size_t k1_n;
+    float k2_base, k2_step;
+    size_t k2_n;
 } metadata_t;
 
 int main(int argc, char* argv[])
@@ -60,7 +64,7 @@ int main(int argc, char* argv[])
     FILE* fmetadata;
     (void) fopen_s(&fmetadata, "db.mtd", "r");
     metadata_t metadata;
-    fscanf_s(fmetadata, "%f%f%f%f%f%f",
+    fscanf_s(fmetadata, "%f%ld%f%f%ld%f",
         &metadata.k1_base, &metadata.k1_n, &metadata.k1_step,
         &metadata.k2_base, &metadata.k2_n, &metadata.k2_step);
 
@@ -98,13 +102,16 @@ int main(int argc, char* argv[])
     inputPair_t* p = inputs.data();
     inputPair_t* pStart = p;
     inputPair_t* pEnd = pStart + nbOfInputs;
+    long const sizeOfData = metadata.k1_n * metadata.k2_n;
     for(; p < pEnd; ++p) {
         inputPair_t& in = *p;
 
         // compute approximate indexes
-        size_t k1idx = (size_t)( floorf((in.k1 - metadata.k1_base) / metadata.k1_step) );
-        size_t k2idx = (size_t)( floorf((in.k2 - metadata.k2_base) / metadata.k2_step) );
-        size_t idx = k1idx * sizeof(data_t) + k2idx;
+        size_t k1idx = (size_t)( floorf( (in.k1 - metadata.k1_base) / metadata.k1_step + 0.5f) );
+        size_t k2idx = (size_t)( floorf( (in.k2 - metadata.k2_base) / metadata.k2_step + 0.5f) );
+        size_t idx = k1idx * metadata.k2_n + k2idx;
+        // clamp
+        idx = std::min((size_t)sizeOfData - 1, idx);
         // grab the result
         data_t datum = data[idx];
 

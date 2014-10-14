@@ -184,3 +184,5 @@ FakesAssemblies/
 
 # test data
 tools/db.*
+tools/input.txt
+testbed/

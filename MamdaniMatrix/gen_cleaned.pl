@@ -79,7 +79,7 @@ my $xdelta_2 = ($sDE->[1] - $sDE->[0]) / 2;
 my $ydelta_2 = ($sE->[1] - $sE->[0]) / 2;
 print '// err X derr => com'."\n";
 print '// (left/err, top/derr, right/err, bottom/derr) => com'."\n";
-print 'std::vector<rect_t, double> g_mandani = {'."\n";
+print 'std::vector<std::pair<rect_t, double> > g_mamdani = {'."\n";
 foreach my $iderr (@$sDE) {
     foreach my $ierr (@$sE) {
         my ($r00, $r01, $r10, $r11) = (

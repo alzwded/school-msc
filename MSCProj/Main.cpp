@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	// time i/o separately since it takes a while
 	volatile clock_t cstartio = clock();
 #pragma warning(disable:4996)
-	FILE* f = fopen("date-big.txt", "r");
+	FILE* f = fopen("date.txt", "r");
 	std::fstream g("output.txt", std::ios::out);
 	// store the input in a vector for faster processing
 	std::vector<float> inputs;

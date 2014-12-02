@@ -67,6 +67,21 @@ foreach my $iderr (@$sDE) {
     }
 }
 
+my @mamdaniCopy = @mamdani;
+# also print in a nice matrix form as a comment
+print '// dE \ E ';
+foreach my $ierr (@$sE) {
+    printf "%7.2f ", $ierr;
+}
+print "\n";
+foreach my $iderr (@$sDE) {
+    printf "//%7.2f ", $iderr;
+    foreach my $ierr (@$sE) {
+        printf "%7.2f ", shift @mamdaniCopy;
+    }
+    print "\n";
+}
+
 ### WRITE A C++ INCLUDE FILE WITH THE MATRIX
 
 # since we need to approximate an input point (err, derr) to a
@@ -120,7 +135,7 @@ sub fuz {
     }
 
     # compute output using centroid method
-    centroid($fcom, $vcom, -1.5, 1.5) # FIXME hardcoded min/max values...
+    centroid($fcom, $vcom, -1, 1) # FIXME hardcoded min/max values...
 }
 
 # compute the values of a fuzzy variable for each term

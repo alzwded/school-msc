@@ -86,7 +86,7 @@ foreach my $iderr (@$sDE) {
             $ierr - $ydelta_2, $iderr - $xdelta_2,
             $ierr + $ydelta_2, $iderr + $xdelta_2
         );
-        printf "    { { %5.2f, %5.2f, %5.2f, %5.2f }, %6.2f },\n",
+        printf "    { { %5.2ff, %5.2ff, %5.2ff, %5.2ff }, %6.2ff },\n",
             $r00, $r01, $r10, $r11, shift(@mamdani);
     }
 }

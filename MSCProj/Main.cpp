@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <vector>
+#include <list>
 #include <ctime>
 #include <algorithm>
 #include <iterator>
@@ -17,7 +18,7 @@ int main(int argc, char* argv[])
 	// time i/o separately since it takes a while
 	volatile clock_t cstartio = clock();
 #pragma warning(disable:4996)
-	FILE* f = fopen("date.txt", "r");
+	FILE* f = fopen("date-big.txt", "r");
 	std::fstream g("output.txt", std::ios::out);
 	// store the input in a vector for faster processing
 	std::vector<float> inputs;
@@ -26,9 +27,12 @@ int main(int argc, char* argv[])
 	while (!feof(f))
 	{
 		float d;
-		fscanf(f, "%lf", &d);
+		fscanf(f, "%f", &d);
 		inputs.push_back(d);
 	}
+
+	std::vector<float> outputs(inputs.size());
+
 	volatile clock_t cstopio = clock();
 	volatile double spentio = (double)(cstopio - cstartio) / CLOCKS_PER_SEC;
 
@@ -36,8 +40,6 @@ int main(int argc, char* argv[])
 
 	// time the computation
 	volatile clock_t cstart = clock();
-
-	std::vector<float> outputs(inputs.size());
 
 	// state variables
 	float lastErr = 0.0; // previous error; initially 0

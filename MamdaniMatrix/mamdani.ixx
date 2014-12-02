@@ -1,6 +1,6 @@
 // err X derr => com
 // (left/err, top/derr, right/err, bottom/derr) => com
-std::vector<std::pair<rect_t, double> > g_mamdani = {
+std::vector<std::pair<rect_t, float> > g_mamdani = {
     { { -1.10, -1.25, -0.90, -0.75 },  -1.00 },
     { { -0.90, -1.25, -0.70, -0.75 },  -0.79 },
     { { -0.70, -1.25, -0.50, -0.75 },  -0.62 },

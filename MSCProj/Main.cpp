@@ -1,6 +1,5 @@
 #include <cstdio>
 #include <vector>
-#include <list>
 #include <ctime>
 #include <algorithm>
 #include <iterator>
@@ -44,6 +43,7 @@ int main(int argc, char* argv[])
 	// state variables
 	float lastErr = 0.0; // previous error; initially 0
 	auto func = [&](float err) -> float {
+		// compute the derivate of the error using the previous value
 		float derr = err - lastErr;
 
 		// locate the partition the current point falls in
@@ -57,8 +57,7 @@ int main(int argc, char* argv[])
 		float val = 0.0;
 		if (found != g_mamdani.end()) val = found->second;
 		
-		// print out the result
-		//fprintf(g, "(%9.5lf, %9.5lf) -> %9.5lf\n", err, derr, val);
+		// store the result
 		return val;
 
 		// update state
@@ -75,6 +74,7 @@ int main(int argc, char* argv[])
 
 	printf("Took %lfs to process %ld values\n", spent, inputs.size());
 
+	// time the output separately
 	cstartio = clock();
 	std::copy(outputs.begin(), outputs.end(), std::ostream_iterator<float>(g, "\n"));
 	cstopio = clock();

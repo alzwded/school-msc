@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 	volatile clock_t cstopio = clock();
 	volatile double spentio = (double)(cstopio - cstartio) / CLOCKS_PER_SEC;
 
-	printf("Took %fs to _read_ %ld values\n", spentio, inputs.size());
+	printf("Took %lfs to _read_ %ld values\n", spentio, inputs.size());
 
 	// time the computation
 	volatile clock_t cstart = clock();
@@ -73,13 +73,13 @@ int main(int argc, char* argv[])
 	// report spent time
 	volatile double spent = (double)(cend - cstart) / CLOCKS_PER_SEC;
 
-	printf("Took %fs to process %ld values\n", spent, inputs.size());
+	printf("Took %lfs to process %ld values\n", spent, inputs.size());
 
 	cstartio = clock();
-	std::copy(outputs.begin(), outputs.end(), std::ostream_iterator<double>(g, "\n"));
+	std::copy(outputs.begin(), outputs.end(), std::ostream_iterator<float>(g, "\n"));
 	cstopio = clock();
 	spentio = (double)(cstopio - cstartio) / CLOCKS_PER_SEC;
-	printf("Took %fs to write %ld values to disk\n", spentio, outputs.size());
+	printf("Took %lfs to write %ld values to disk\n", spentio, outputs.size());
 
 	return 0;
 }

@@ -140,6 +140,7 @@ sub fuz {
             # val is min(err, derr)
             my @vals = ($vderr->{$nderr}, $verr->{$nerr});
             my $val = $vals[$vals[0] > $vals[1]];
+            # get the output term from the inference matrix
             my $term = $inf->{$nderr}->{$nerr};
             # aggregate with max, if overlapping
             $vcom->{$term} = (defined $vcom->{$term})

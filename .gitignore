@@ -187,3 +187,5 @@ tools/db.*
 tools/input.txt
 testbed/
 [Dd]ebugProfile
+MSCProj.bin
+output.txt

@@ -4,6 +4,16 @@
 #include <ctime> // for timing the computation
 #include <xmmintrin.h> // use SSE intrinsics to make this code more awesome
 
+#ifdef _MSC_VER
+# define ALIGNED(X) __declspec(align(16)) X
+# define SIZE_FORMAT "%ld"
+#else
+# define ALIGNED(X) X __attribute__((aligned(16)))
+# define SIZE_FORMAT "%d"
+#include <cstdlib> // linux
+#include <cstring> // linux
+#endif
+
 // include & define dependent libraries and types
 #include <map>
 #include <utility>
@@ -21,13 +31,13 @@ static inline void pDistanceX2(
 	float* output)
 {
 	// we need aligned memory to load the xmmN registers
-	__declspec(align(16)) float va[4] = {
+	ALIGNED(float va[4]) = {
 		a2.second,
 		a2.first,
 		a1.second,
 		a1.first,
 	};
-	__declspec(align(16)) float vb[4] = {
+	ALIGNED(float vb[4]) = {
 		b2.second,
 		b2.first,
 		b1.second,
@@ -74,7 +84,7 @@ int main(int argc, char* argv[])
 	volatile clock_t cstopio = clock();
 	volatile double spentio = (double)(cstopio - cstartio) / CLOCKS_PER_SEC;
 
-	printf("Took %lfs to _read_ %ld values\n", spentio, inputs.size());
+	printf("Took %lfs to _read_ " SIZE_FORMAT " values\n", spentio, inputs.size());
 
 	// time the computation proper
 	volatile clock_t cstart = clock();
@@ -122,7 +132,7 @@ int main(int argc, char* argv[])
 
 			// prepare the 4 computed results in some aligned memory;
 			// we'll load it in an SSE register later
-			__declspec(align(16)) float va[4];
+			ALIGNED(float va[4]);
 			memcpy(va, (float*)&(found->second), 4 * sizeof(float));
 			// compute the coordinates of the points in normalized space
 			std::pair<float, float> p(
@@ -135,7 +145,7 @@ int main(int argc, char* argv[])
 				c3(0.f, 1.f),
 				c4(1.f, 1.f);
 			// compute the distances and store results in aligned memory
-			__declspec(align(16)) float vb[4] = {};
+			ALIGNED(float vb[4]) = {};
 			pDistanceX2(c1, p, c2, p, vb);
 			pDistanceX2(c3, p, c4, p, vb + 2);
 			// if a distance is 0, the result is that point's
@@ -161,7 +171,7 @@ int main(int argc, char* argv[])
 			// -- load distances
 			xmm0 = _mm_load_ps(vb);
 			// -- invert (1/x) them to compute the weights
-			static __declspec(align(16)) float ones[4] = { 1.f, 1.f, 1.f, 1.f };
+			static ALIGNED(float ones[4]) = { 1.f, 1.f, 1.f, 1.f };
 			xmm1 = _mm_load_ps(ones);
 			xmm1 = _mm_div_ps(xmm1, xmm0);
 			// multiply the values with the weights
@@ -214,7 +224,7 @@ int main(int argc, char* argv[])
 	// report spent time
 	volatile double spent = (double)(cend - cstart) / CLOCKS_PER_SEC;
 
-	printf("Took %lfs to process %ld values\n", spent, inputs.size());
+	printf("Took %lfs to process " SIZE_FORMAT " values\n", spent, inputs.size());
 
 	// time the output separately
 	cstartio = clock();
@@ -225,7 +235,7 @@ int main(int argc, char* argv[])
 	}
 	cstopio = clock();
 	spentio = (double)(cstopio - cstartio) / CLOCKS_PER_SEC;
-	printf("Took %lfs to write %ld values to disk\n", spentio, outputs.size());
+	printf("Took %lfs to write " SIZE_FORMAT " values to disk\n", spentio, outputs.size());
 
 	return 0;
 }

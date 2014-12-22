@@ -1,10 +1,10 @@
+GPP_FLAGS = --std=gnu++11 -msse -I../MamdaniMatrix -O3 -ffast-math
+
 MSCProj.bin: Main.cpp ../MamdaniMatrix/mamdani.ixx
-	g++ --std=gnu++11 -O3 -msse -I../MamdaniMatrix/ Main.cpp -o MSCProj.bin
+	g++ $(GPP_FLAGS) Main.cpp -o MSCProj.bin
 
 ../MamdaniMatrix/mamdani.ixx: ../MamdaniMatrix/gen_cleaned.pl
-	pushd .
-	cd ../MamdaniMatrix/ && perl ./gen_cleaned.pl
-	popd
+	sh -c 'cd ../MamdaniMatrix/ && perl ./gen_cleaned.pl'
 
 clean:
 	rm -f MSCProj.bin

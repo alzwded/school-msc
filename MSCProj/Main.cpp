@@ -3,6 +3,7 @@
 #include <algorithm> // for vector processing
 #include <ctime> // for timing the computation
 #include <xmmintrin.h> // use SSE intrinsics to make this code more awesome
+#include <omp.h> // blast processing
 
 // include & define dependent libraries and types
 #include <map>
@@ -69,6 +70,11 @@ int main(int argc, char* argv[])
 	// declare & initialize our outputs vector now that
 	// we know how many results we'll have
 	std::vector<float> outputs(inputs.size());
+	std::vector<float> derrs(inputs.size());
+	derrs[0] = 0.f;
+	for (size_t i = 1; i < inputs.size(); ++i) {
+		derrs[i] = inputs[i] - inputs[i - 1];
+	}
 
 	// stop timing I/O
 	volatile clock_t cstopio = clock();
@@ -79,13 +85,10 @@ int main(int argc, char* argv[])
 	// time the computation proper
 	volatile clock_t cstart = clock();
 
-	// state variables
-	float lastErr = 0.0; // previous error; initially 0
-	auto func = [&](float err) -> float {
+	auto func = [&](size_t idx) -> float {
 		// compute the derivate of the error using the previous value
-		float derr = err - lastErr;
-		// update state
-		lastErr = err;
+		float err = inputs[idx];
+		float derr = derrs[idx];
 
 		// locate the partition the current point falls in
 		auto found = std::find_if(g_mamdani.begin(), g_mamdani.end(), [&derr, &err](decltype(g_mamdani.front())& o) -> bool {
@@ -209,8 +212,15 @@ int main(int argc, char* argv[])
 		}
 	};
 
-	// process all inputs with our stateful function
-	std::transform(inputs.begin(), inputs.end(), outputs.begin(), func);
+	// use blast processing (OMP)
+	int const n = inputs.size();
+    #pragma omp parallel for num_threads(4)
+	for (int i = 0; i < n; ++i) {
+		outputs[i] = func(i);
+	}
+
+	//// process all inputs with our stateful function
+	//std::transform(inputs.begin(), inputs.end(), outputs.begin(), func);
 
 	volatile clock_t cend = clock();
 
@@ -221,10 +231,8 @@ int main(int argc, char* argv[])
 
 	// time the output separately
 	cstartio = clock();
-	lastErr = 0;
 	for (size_t i = 0; i < inputs.size(); ++i) {
-		fprintf(g, "%10.6f, %10.6f => %6.2f\n", inputs[i], inputs[i] - lastErr, outputs[i]);
-		lastErr = inputs[i];
+		fprintf(g, "%10.6f, %10.6f => %6.2f\n", inputs[i], inputs[i] - derrs[i], outputs[i]);
 	}
 	cstopio = clock();
 	spentio = (double)(cstopio - cstartio) / CLOCKS_PER_SEC;

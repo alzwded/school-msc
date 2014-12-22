@@ -96,24 +96,31 @@ foreach my $iderr (@$sDE) {
 # partition an input point falls in
 
 # the widths of the partitions, divided by two
-my $xdelta_2 = ($sDE->[1] - $sDE->[0]) / 2;
-my $ydelta_2 = ($sE->[1] - $sE->[0]) / 2;
+my $xdelta = ($sDE->[1] - $sDE->[0]);
+my $ydelta = ($sE->[1] - $sE->[0]);
+my $base = 0;
+@mamdani = (@mamdani, map { 0 } (0..@$sE)); # append some 0s at the end
 # print out some comments
 print '// err X derr => com'."\n";
 print '// (left/err, top/derr, right/err, bottom/derr) => com'."\n";
 # declare the variable
-print 'std::vector<std::pair<rect_t, float> > g_mamdani = {'."\n";
+printf "float g_extents[2] = { 0.2f, 0.5f };\n";
+print 'std::vector<std::pair<rect_t, com_t> > g_mamdani = {'."\n";
 foreach my $iderr (@$sDE) {
     # output the rows
     foreach my $ierr (@$sE) {
         # compute the cell's extent
         my ($r00, $r01, $r10, $r11) = (
-            $ierr - $ydelta_2, $iderr - $xdelta_2,
-            $ierr + $ydelta_2, $iderr + $xdelta_2
+            $ierr, $iderr,
+            $ierr + $ydelta, $iderr + $xdelta
         );
         # write out the cell
-        printf "    { { %5.2ff, %5.2ff, %5.2ff, %5.2ff }, %6.2ff },\n",
-            $r00, $r01, $r10, $r11, shift(@mamdani);
+        printf "    { { %5.2ff, %5.2ff, %5.2ff, %5.2ff }, " .
+                     "{ %6.2ff, %6.2ff, %6.2ff, %6.2ff, } },\n",
+            $r00, $r01, $r10, $r11, #shift(@mamdani);
+            $mamdani[$base], $mamdani[$base + 1],
+            $mamdani[$base + @$sE], $mamdani[$base + @$sE + 1];
+        ++$base;
     }
 }
 # done.

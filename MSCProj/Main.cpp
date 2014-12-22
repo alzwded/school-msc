@@ -191,8 +191,8 @@ int main(int argc, char* argv[])
 			//
 			// but first we need to shuffle our registers a bit
 			__m128 xmm2, xmm3;
-			xmm2 = _mm_movehl_ps(xmm1, xmm0);
-			xmm3 = _mm_movelh_ps(xmm0, xmm1);
+			xmm2 = _mm_movehl_ps(xmm1, xmm0); // a3 a2 b3 b2
+			xmm3 = _mm_movelh_ps(xmm0, xmm1); // b1 b0 a1 a0
 			xmm2 = _mm_add_ps(xmm2, xmm3);
 			// save results
 			_mm_store_ps(va, xmm2);

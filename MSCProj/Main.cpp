@@ -100,6 +100,17 @@ int main(int argc, char* argv[])
 			// setup values
 			float errUnit = (err - found->first.left) / g_extents[0];
 			float derrUnit = (derr - found->first.top) / g_extents[1];
+			// use trigonometric interpolation
+			auto l = [](float t) -> float {
+				//return 1 - powf(1 - t, 1.392f);				
+				//return 1 - powf(1 - t, 5.f/4.f);
+				return 1.f - tanf(3.14159f / 4.f * (1 - t));
+			};
+			errUnit = l(errUnit);
+			derrUnit = l(errUnit);
+
+			//errUnit = sinf(errUnit * 3.14159f/2.f);
+			//derrUnit = sinf(derrUnit * 3.14159f/2.f);
 			static __declspec(align(16)) float leftTerms[4] = { 1.f, 0.f, 1.f, 0.f };
 			__declspec(align(16)) float va[4] = {
 				-errUnit,

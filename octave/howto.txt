@@ -1,0 +1,9 @@
+pkg load fuzzy-logic-toolkit
+cd d:\Projects\school-msc\octave
+# around line 70, change the first parameter to evalfis
+# to be the desired output point to whatever you want
+
+# or
+
+fis=readfis ('my_mamdani');
+evalfis([v1, v2], fis, 101)

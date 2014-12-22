@@ -13,9 +13,7 @@ typedef struct { float v1, v2, v3, v4; } com_t;
 // include the mamdani matrix generated with gen_cleaned.pl
 #include <mamdani.ixx>
 
-#if 0
-// not needed...
-static inline float pDistance(std::pair<float, float> a, std::pair<float, float> b, float maxDistance2)
+static inline float pDistance(std::pair<float, float> a, std::pair<float, float> b, float maxDistance2 = 1.41f)
 {
 	__declspec(align(16)) float va[4] = {
 		0.f,
@@ -35,11 +33,14 @@ static inline float pDistance(std::pair<float, float> a, std::pair<float, float>
 	reg2 = reg1;
 	reg1 = _mm_mul_ps(reg1, reg2);
 	_mm_store_ps(va, reg1);
+	float temp = va[2] + va[3];
+	return temp;
+#if 0
 	float temp = (va[2] + va[3]) / maxDistance2;
 	if (temp > maxDistance2) return 1;
 	else return temp / maxDistance2;
-}
 #endif
+}
 
 int main(int argc, char* argv[])
 {
@@ -97,6 +98,7 @@ int main(int argc, char* argv[])
 
 		float val = 0.0;
 		if (found != g_mamdani.end()) {
+#ifdef BILINEAR_INTERPOLATION
 			// setup values
 			float errUnit = (err - found->first.left) / g_extents[0];
 			float derrUnit = (derr - found->first.top) / g_extents[1];
@@ -144,14 +146,71 @@ int main(int argc, char* argv[])
 
 			_mm_store_ps(va, reg1);
 
-			val = va[0] + va[1] + va[2] + va[3];
+			val = va[0] + va[1] + va[2] + va[3];â
+#else
+			// inverse distance weighting
+			// (v[i] * (1-d[i]) / (1-d[i])
+			__declspec(align(16)) float va[4];
+			memcpy(va, (float*)&(found->second), 4 * sizeof(float));
+			std::pair<float, float> p(err, derr);
+			std::pair<float, float>
+				c1(found->first.left, found->first.top),
+				c2(found->first.right, found->first.top),
+				c3(found->first.left, found->first.bottom),
+				c4(found->first.right, found->first.bottom);
+			__declspec(align(16)) float vb[4] = {
+				pDistance(c1, p),
+				pDistance(c2, p),
+				pDistance(c3, p),
+				pDistance(c4, p),
+			};
+			for (size_t i = 0; i < 4; ++i) {
+				if (vb[i] < 1.0e-7f) {
+					val = va[i];
+					goto done;
+				}
+				else {
+					vb[i] = powf(vb[i], 1.f/1.8f);
+				}
+			}
+			__m128 reg1, reg2;
+			// compute weights
+			static __declspec(align(16)) float ones[4] = { 1.f, 1.f, 1.f, 1.f };
+			// -- fiddle with the distances
+			reg1 = _mm_load_ps(vb);
+			//reg1 = _mm_sqrt_ps(reg1);
+			//reg1 = _mm_mul_ps(reg1, reg1);
+			// -- subtract from 1
+			reg2 = _mm_load_ps(ones);
+			reg2 = _mm_div_ps(reg2, reg1);
+			// multiply the values
+			reg1 = _mm_load_ps(va);
+			reg1 = _mm_mul_ps(reg1, reg2);
+			// retrieve the values
+			_mm_store_ps(va, reg1);
+			_mm_store_ps(vb, reg2);
+			// compute final value
+			__declspec(align(16)) float vc[8] = {
+				va[0], va[1],
+				vb[0], vb[1],
+				va[2], va[3],
+				vb[2], vb[3],
+			};
+			reg1 = _mm_load_ps(vc);
+			reg2 = _mm_load_ps(vc + 4);
+			reg1 = _mm_add_ps(reg1, reg2);
+			_mm_store_ps(va, reg1);
+			val = (va[0] + va[1]) / (va[2] + va[3]);
+#endif
+
 		}
+
+done:
+		// update state
+		lastErr = err;
 		
 		// store the result
 		return val;
-
-		// update state
-		lastErr = err;
 	};
 
 	// process all inputs with our stateful function

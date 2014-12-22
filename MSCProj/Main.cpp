@@ -188,17 +188,14 @@ int main(int argc, char* argv[])
 			// xmm0   m00   m10   w00   w01   +
 			// xmm1   m01   m11   w10   w11
 			//      m0001 m1011 w0001 m1011
-			__declspec(align(16)) float vc[8] = {
-				va[0], va[1],
-				vb[0], vb[1],
-				va[2], va[3],
-				vb[2], vb[3],
-			};
-			xmm0 = _mm_load_ps(vc);
-			xmm1 = _mm_load_ps(vc + 4);
-			xmm0 = _mm_add_ps(xmm0, xmm1);
+			//
+			// but first we need to shuffle our registers a bit
+			__m128 xmm2, xmm3;
+			xmm2 = _mm_movehl_ps(xmm1, xmm0);
+			xmm3 = _mm_movelh_ps(xmm0, xmm1);
+			xmm2 = _mm_add_ps(xmm2, xmm3);
 			// save results
-			_mm_store_ps(va, xmm0);
+			_mm_store_ps(va, xmm2);
 
 			// finish the final two sums and divide them
 			//     (m0001 + m1011)/(w0001 + w1011)

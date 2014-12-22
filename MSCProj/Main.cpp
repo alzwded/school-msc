@@ -13,36 +13,40 @@ typedef struct { float v[4]; } com_t;
 #include <mamdani.ixx>
 
 // computes the squared distance between two points
-static inline float pDistance(
-	std::pair<float, float> a,
-	std::pair<float, float> b)
+static inline void pDistanceX2(
+	std::pair<float, float> a1,
+	std::pair<float, float> b1,
+	std::pair<float, float> a2,
+	std::pair<float, float> b2,
+	float* output)
 {
 	// we need aligned memory to load the xmmN registers
 	__declspec(align(16)) float va[4] = {
-		0.f,
-		0.f,
-		a.second,
-		a.first,
+		a2.second,
+		a2.first,
+		a1.second,
+		a1.first,
 	};
 	__declspec(align(16)) float vb[4] = {
-		0.f,
-		0.f,
-		b.second,
-		b.first,
+		b2.second,
+		b2.first,
+		b1.second,
+		b1.first,
 	};
 	// load the values in two SSE registers
-	__m128 reg1 = _mm_load_ps(va);
-	__m128 reg2 = _mm_load_ps(vb);
+	__m128 xmm0 = _mm_load_ps(va);
+	__m128 xmm1 = _mm_load_ps(vb);
 	// subtract them
-	reg1 = _mm_sub_ps(reg1, reg2);
+	xmm0 = _mm_sub_ps(xmm0, xmm1);
 	// raise the results ^2
-	reg2 = reg1;
-	reg1 = _mm_mul_ps(reg1, reg2);
+	xmm1 = xmm0;
+	xmm0 = _mm_mul_ps(xmm0, xmm1);
 	// store them back in main memory
-	_mm_store_ps(va, reg1);
+	_mm_store_ps(va, xmm0);
 
 	// return the result
-	return va[2] + va[3];
+	output[0] = va[2] + va[3];
+	output[1] = va[0] + va[1];
 }
 
 int main(int argc, char* argv[])
@@ -56,8 +60,7 @@ int main(int argc, char* argv[])
 	std::vector<float> inputs;
 	inputs.reserve(10002);
 
-	while (!feof(f))
-	{
+	while (!feof(f)) {
 		float d;
 		fscanf(f, "%f", &d);
 		inputs.push_back(d);
@@ -93,22 +96,38 @@ int main(int argc, char* argv[])
 		});
 
 		if (found != g_mamdani.end()) {
-			// bilinear interpolation didn't work; see revision history for code if you're interested
+			// NOTE: bilinear interpolation didn't work; see revision history for code if you're interested
 
 			// inverse distance weighing interpolation
-			// (v[i] * (1-w[i]) / (1-w[i])
+			//     v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11
+			// o = ---------------------------------------------
+			//                 w00 + w10 + w01 + w11
+			//
 			//          1
 			// w = -----------
-			//           1
-			//        ------
-			//      d^ 1.857
+			//        /   1  \
+			//        |------|
+			//      d^\ 1.857/
+			//
+			// 1.857 was computed experimentally to reduce the
+			// error between this and gnu octave / matlab
+			//
+			// we can use SSE for a lot of the math since
+			// we're working with 4 sets of values that can
+			// be done in parallel for the most part
+			//
+			// for that, loading and storing memory to/from
+			// the xmmN registers needs to be done with aligned
+			// memory
 
 			// prepare the 4 computed results in some aligned memory;
 			// we'll load it in an SSE register later
 			__declspec(align(16)) float va[4];
 			memcpy(va, (float*)&(found->second), 4 * sizeof(float));
 			// compute the coordinates of the points in normalized space
-			std::pair<float, float> p((err - found->first.left)/g_extents[0], (derr - found->first.top)/g_extents[1]);
+			std::pair<float, float> p(
+				(err - found->first.left)/g_extents[0],
+				(derr - found->first.top)/g_extents[1]);
 			// these are constants
 			static std::pair<float, float> const
 				c1(0.f, 0.f),
@@ -116,63 +135,76 @@ int main(int argc, char* argv[])
 				c3(0.f, 1.f),
 				c4(1.f, 1.f);
 			// compute the distances and store results in aligned memory
-			__declspec(align(16)) float vb[4] = {
-				pDistance(c1, p),
-				pDistance(c2, p),
-				pDistance(c3, p),
-				pDistance(c4, p),
-			};
+			__declspec(align(16)) float vb[4] = {};
+			pDistanceX2(c1, p, c2, p, vb);
+			pDistanceX2(c3, p, c4, p, vb + 2);
 			// if a distance is 0, the result is that point's
 			for (size_t i = 0; i < 4; ++i) {
 				if (vb[i] < 1.0e-7f) {
 					return va[i];
-					
-				}
-				else {
+				} else {
 					// 1.857 was computed experimentally to reduce the
 					// error between this and gnu octave / matlab
 					vb[i] = powf(vb[i], 1.f / 1.857f);
 				}
 			}
+
 			// our xmmN registers
-			__m128 reg1, reg2;
+			__m128 xmm0, xmm1;
 			// compute weights
+			//
+			// stream the 4 divisions
+			//      lane1 lane2 lane3 lane4
+			// xmm1     1     1     1     1   /
+			// xmm0   d00   d10   d01   d11
+			//        w00   w10   w01   w11
 			// -- load distances
-			reg1 = _mm_load_ps(vb);
+			xmm0 = _mm_load_ps(vb);
 			// -- invert (1/x) them to compute the weights
 			static __declspec(align(16)) float ones[4] = { 1.f, 1.f, 1.f, 1.f };
-			reg2 = _mm_load_ps(ones);
-			reg2 = _mm_div_ps(reg2, reg1);
+			xmm1 = _mm_load_ps(ones);
+			xmm1 = _mm_div_ps(xmm1, xmm0);
 			// multiply the values with the weights
-			reg1 = _mm_load_ps(va);
-			reg1 = _mm_mul_ps(reg1, reg2);
+			//
+			// stream the four multiplications
+			//      lane1 lane2 lane3 lane4
+			// xmm0   v00   v10   v01   v11   *
+			// xmm1   w00   w10   w01   w11
+			//        m00   m10   m01   m11
+			xmm0 = _mm_load_ps(va);
+			xmm0 = _mm_mul_ps(xmm0, xmm1);
 			// retrieve the values
-			_mm_store_ps(va, reg1);
-			_mm_store_ps(vb, reg2);
+			_mm_store_ps(va, xmm0);
+			_mm_store_ps(vb, xmm1);
 			// compute final value
+			//
 			// use SSE again because we have 6 sums to do
+			//  (m00 + m10) + (m01 + m11)
+			//  -------------------------
+			//  (w00 + w10) + (w01 + w11)
+			//
 			// so stream 4 of them
-			//          lane1 lane2 lane3 lane4
-			//    xmm0   top1  top2  bot1  bot2
-			//    xmm1   top3  top4  bot3  bot4
+			//      lane1 lane2 lane3 lane4
+			// xmm0   m00   m10   w00   w01   +
+			// xmm1   m01   m11   w10   w11
+			//      m0001 m1011 w0001 m1011
 			__declspec(align(16)) float vc[8] = {
 				va[0], va[1],
 				vb[0], vb[1],
 				va[2], va[3],
 				vb[2], vb[3],
 			};
-			reg1 = _mm_load_ps(vc);
-			reg2 = _mm_load_ps(vc + 4);
-			reg1 = _mm_add_ps(reg1, reg2);
+			xmm0 = _mm_load_ps(vc);
+			xmm1 = _mm_load_ps(vc + 4);
+			xmm0 = _mm_add_ps(xmm0, xmm1);
 			// save results
-			_mm_store_ps(va, reg1);
+			_mm_store_ps(va, xmm0);
 
-			// finish the final two sums
-			// and divide them
+			// finish the final two sums and divide them
+			//     (m0001 + m1011)/(w0001 + w1011)
 			// and that's our interpolated value
 			return (va[0] + va[1]) / (va[2] + va[3]);
-		}
-		else {
+		} else {
 			return 0.f;
 		}
 	};

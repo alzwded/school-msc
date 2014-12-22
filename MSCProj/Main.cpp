@@ -33,9 +33,10 @@ static inline float pDistance(std::pair<float, float> a, std::pair<float, float>
 	reg2 = reg1;
 	reg1 = _mm_mul_ps(reg1, reg2);
 	_mm_store_ps(va, reg1);
+#if 1
 	float temp = va[2] + va[3];
 	return temp;
-#if 0
+#else
 	float temp = (va[2] + va[3]) / maxDistance2;
 	if (temp > maxDistance2) return 1;
 	else return temp / maxDistance2;
@@ -152,12 +153,12 @@ int main(int argc, char* argv[])
 			// (v[i] * (1-d[i]) / (1-d[i])
 			__declspec(align(16)) float va[4];
 			memcpy(va, (float*)&(found->second), 4 * sizeof(float));
-			std::pair<float, float> p(err, derr);
+			std::pair<float, float> p((err - found->first.left)/g_extents[0], (derr - found->first.top)/g_extents[1]);
 			std::pair<float, float>
-				c1(found->first.left, found->first.top),
-				c2(found->first.right, found->first.top),
-				c3(found->first.left, found->first.bottom),
-				c4(found->first.right, found->first.bottom);
+				c1(0.f, 0.f),
+				c2(1.f, 0.f),
+				c3(0.f, 1.f),
+				c4(1.f, 1.f);
 			__declspec(align(16)) float vb[4] = {
 				pDistance(c1, p),
 				pDistance(c2, p),
@@ -170,7 +171,8 @@ int main(int argc, char* argv[])
 					goto done;
 				}
 				else {
-					vb[i] = powf(vb[i], 1.f/1.8f);
+					//vb[i] = powf(vb[i], 1.f/1.85f);
+					vb[i] = powf(vb[i], 1.f / 1.857f);
 				}
 			}
 			__m128 reg1, reg2;
@@ -180,7 +182,7 @@ int main(int argc, char* argv[])
 			reg1 = _mm_load_ps(vb);
 			//reg1 = _mm_sqrt_ps(reg1);
 			//reg1 = _mm_mul_ps(reg1, reg1);
-			// -- subtract from 1
+			// -- invert
 			reg2 = _mm_load_ps(ones);
 			reg2 = _mm_div_ps(reg2, reg1);
 			// multiply the values
@@ -228,7 +230,8 @@ done:
 	//std::copy(outputs.begin(), outputs.end(), std::ostream_iterator<float>(g, "\n"));	
 	lastErr = 0;
 	for (size_t i = 0; i < inputs.size(); ++i) {
-		fprintf(g, "%10.6f, %10.6f => %10.6f\n", inputs[i], inputs[i] - lastErr, outputs[i]);
+		//fprintf(g, "%10.6f, %10.6f => %10.6f\n", inputs[i], inputs[i] - lastErr, outputs[i]);
+		fprintf(g, "%10.6f, %10.6f => %6.2f\n", inputs[i], inputs[i] - lastErr, outputs[i]);
 		lastErr = inputs[i];
 	}
 	cstopio = clock();

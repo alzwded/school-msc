@@ -7,11 +7,13 @@
 #ifdef _MSC_VER
 # define ALIGNED(X) __declspec(align(16)) X
 # define SIZE_FORMAT "%ld"
+# include <intrin.h> // SSE3
 #else
 # define ALIGNED(X) X __attribute__((aligned(16)))
 # define SIZE_FORMAT "%d"
-#include <cstdlib> // linux
-#include <cstring> // linux
+# include <cstdlib> // linux
+# include <cstring> // linux
+# include <pmmintrin.h> // SSE3
 #endif
 
 // include & define dependent libraries and types
@@ -183,34 +185,29 @@ int main(int argc, char* argv[])
 			//        m00   m10   m01   m11
 			xmm0 = _mm_load_ps(va);
 			xmm0 = _mm_mul_ps(xmm0, xmm1);
-			// retrieve the values
-			_mm_store_ps(va, xmm0);
-			_mm_store_ps(vb, xmm1);
-			// compute final value
-			//
+            // compute the value
+            //
 			// use SSE again because we have 6 sums to do
+            // and a division afterwards
 			//  (m00 + m10) + (m01 + m11)
 			//  -------------------------
 			//  (w00 + w10) + (w01 + w11)
-			//
-			// so stream 4 of them
+            //
 			//      lane1 lane2 lane3 lane4
-			// xmm0   m00   m10   w00   w01   +
-			// xmm1   m01   m11   w10   w11
-			//      m0001 m1011 w0001 m1011
-			//
-			// but first we need to shuffle our registers a bit
-			__m128 xmm2, xmm3;
-			xmm2 = _mm_movehl_ps(xmm1, xmm0); // a3 a2 b3 b2
-			xmm3 = _mm_movelh_ps(xmm0, xmm1); // b1 b0 a1 a0
-			xmm2 = _mm_add_ps(xmm2, xmm3);
-			// save results
-			_mm_store_ps(va, xmm2);
+			// xmm0   m00   m10   m01   m11 h/+
+			// xmm1   w00   w10   w01   w11
+            //      w0010 w0111 m0010 m0111
+            xmm0 = _mm_hadd_ps(xmm0, xmm1);
+            //         mB    mA    wB    wA
+            xmm0 = _mm_hadd_ps(xmm0, xmm0);
+            //      mB+mA wB+wA mB+mA wB+wA
 
-			// finish the final two sums and divide them
-			//     (m0001 + m1011)/(w0001 + w1011)
+            // store results
+            _mm_store_ps(va, xmm0);
+
+            // divide mB+mA / wB+wA
 			// and that's our interpolated value
-			return (va[0] + va[1]) / (va[2] + va[3]);
+			return va[0] / va[1];
 		} else {
 			return 0.f;
 		}

@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
 			//      lane1 lane2 lane3 lane4
 			// xmm0   m00   m10   m01   m11 h/+
 			// xmm1   w00   w10   w01   w11
-            //      w0010 w0111 m0010 m0111
+            //      m0010 m0111 w0010 w0111
             xmm0 = _mm_hadd_ps(xmm0, xmm1);
             //         mB    mA    wB    wA
             xmm0 = _mm_hadd_ps(xmm0, xmm0);

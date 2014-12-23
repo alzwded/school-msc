@@ -3,17 +3,16 @@
 #include <algorithm> // for vector processing
 #include <ctime> // for timing the computation
 #include <xmmintrin.h> // use SSE intrinsics to make this code more awesome
+#include <pmmintrin.h> // SSE3
 
 #ifdef _MSC_VER
 # define ALIGNED(X) __declspec(align(16)) X
 # define SIZE_FORMAT "%ld"
-# include <intrin.h> // SSE3
 #else
 # define ALIGNED(X) X __attribute__((aligned(16)))
 # define SIZE_FORMAT "%d"
 # include <cstdlib> // linux
 # include <cstring> // linux
-# include <pmmintrin.h> // SSE3
 #endif
 
 // include & define dependent libraries and types

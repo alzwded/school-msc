@@ -237,5 +237,5 @@ sub centroid {
 sub is_between {
     my ($val, $a, $b) = @_;
 
-    ($val >= $a) and ($b >= $val)
+    ($val >= $a) and ($b > $val)
 }

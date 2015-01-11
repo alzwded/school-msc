@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     float lastErr = 0.0; // previous error; initially 0
     auto func = [&](float err) -> float {
         // compute the derivate of the error using the previous value
-        float derr = err - lastErr;
+        float derr = (err - lastErr) / 0.1f;
         // update state
         lastErr = err;
 
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
             // w = -----------
             //        /   1  \
             //        |------|
-            //      d^\ 1.857/
+            //      d^\ 1.33 /
             //
             // 1.857 was computed experimentally to reduce the
             // error between this and gnu octave / matlab
@@ -154,9 +154,9 @@ int main(int argc, char* argv[])
                 if (vb[i] < 1.0e-7f) {
                     return va[i];
                 } else {
-                    // 1.857 was computed experimentally to reduce the
+                    // 1.33 was computed experimentally to reduce the
                     // error between this and gnu octave / matlab
-                    vb[i] = powf(vb[i], 1.f / 1.857f);
+                    vb[i] = powf(vb[i], 1.f / 1.33f);
                 }
             }
 
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
     cstartio = clock();
     lastErr = 0;
     for (size_t i = 0; i < inputs.size(); ++i) {
-        fprintf(g, "%10.6f, %10.6f => %6.2f\n", inputs[i], inputs[i] - lastErr, outputs[i]);
+        fprintf(g, "%10.6f, %10.6f => %6.2f\n", inputs[i], (inputs[i] - lastErr) / 0.1f, outputs[i]);
         lastErr = inputs[i];
     }
     cstopio = clock();
